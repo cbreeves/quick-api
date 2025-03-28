@@ -1,0 +1,60 @@
+---
+# Ansible playbook to verify connectivity to AWS DRS endpoints
+# Required environment variables:
+#   - aws_drs_download_url: URL for DRS downloads
+#   - aws_drs_endpoint: DRS service endpoint
+
+- name: Test connectivity to AWS DRS endpoints
+  hosts: all                    # Run on all hosts in inventory
+  gather_facts: no             # Skip fact gathering for faster execution
+  
+  # Define variables from environment variables
+  vars:
+    # Get download URL from environment variable
+    aws_drs_download_url: "{{ lookup('env', 'aws_drs_download_url') }}"
+    # Get DRS endpoint from environment variable
+    aws_drs_endpoint: "{{ lookup('env', 'aws_drs_endpoint') }}"
+
+  tasks:
+    # Test connectivity to the DRS download URL
+    - name: Test connectivity to DRS download URL
+      uri:
+        url: "{{ aws_drs_download_url }}"
+        method: GET
+        validate_certs: yes    # Ensure SSL certificates are valid
+      register: download_url_test    # Store the result for later use
+      ignore_errors: yes            # Continue playbook even if this test fails
+
+    # Test connectivity to the main DRS endpoint
+    - name: Test connectivity to DRS endpoint
+      uri:
+        url: "{{ aws_drs_endpoint }}"
+        method: GET
+        validate_certs: yes    # Ensure SSL certificates are valid
+      register: endpoint_test       # Store the result for later use
+      ignore_errors: yes           # Continue playbook even if this test fails
+
+    # Fail the playbook if either endpoint is unreachable
+    - name: Fail if either endpoint is unreachable
+      fail:
+        msg: |
+          Connectivity test failed:
+          Download URL ({{ aws_drs_download_url }}): {{ 'SUCCESS' if download_url_test.status == 200 else 'FAILED' }}
+          DRS Endpoint ({{ aws_drs_endpoint }}): {{ 'SUCCESS' if endpoint_test.status == 200 else 'FAILED' }}
+      # Check both endpoints returned HTTP 200 status code
+      when: >
+        download_url_test.status is not defined or 
+        download_url_test.status != 200 or 
+        endpoint_test.status is not defined or 
+        endpoint_test.status != 200
+
+    # Display success message if all tests pass
+    - name: Show success message
+      debug:
+        msg: "All connectivity tests passed successfully"
+      # Only show success when both endpoints return HTTP 200
+      when: >
+        download_url_test.status is defined and 
+        download_url_test.status == 200 and 
+        endpoint_test.status is defined and 
+        endpoint_test.status == 200

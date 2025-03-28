@@ -1,0 +1,25 @@
+{
+  "groups": [
+    {
+      "name": "Default",
+      "hosts": [
+        {
+          "name": "target1",
+          "group": "Default",
+          "ipAddress": "10.1.1.68",
+          "dnsHostname": "ubuntu-target.rh.local"
+        },
+        {
+          "name": "target2",
+          "ipAddress": "10.1.1.68",
+          "dnsHostname": "ubuntu-target.rh.local",
+          "group": "Default"
+        }
+      ],
+      "vars": {
+        "become_secret_name": "local-domain",
+        "connect_secret_name": "local-become"
+      }
+    }
+  ]
+}

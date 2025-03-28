@@ -1,0 +1,7 @@
+---
+- name: Ping Source Host
+  gather_facts: false
+  hosts: all
+  tasks:
+  - name: Update SSH Key in known_hosts 
+    ansible.builtin.ping: 
